@@ -89,8 +89,7 @@ The 9 QE agents (`code-reviewer`, `test-generator`, `api-validator`,
 `merge-request`, `debugger`, `cicd-validator`) and 7 testing-tool agents
 (`junit5`, `jest`, `playwright`, `gatling`, `jmeter`, `sonarqube`, `snyk`) live
 flat in `.claude/agents/` and load on invocation, each `@import`-ing the contexts
-it needs from `.claude/context/`. Dependency map: `.claude/rules/context-dictionary.md`.
-Ecosystem overview: `.claude/agent-ecosystem.md` (+ `.mmd` diagram).
+it needs from `.claude/context/`.
 
 > Testing tools are configured **AI-workspace-only** — no build/config changes were
 > made. `pom.xml` / `package.json` are untouched.
@@ -101,6 +100,6 @@ Ecosystem overview: `.claude/agent-ecosystem.md` (+ `.mmd` diagram).
   `testing/`) + `sdd/` agents + 9 QE agents + 7 testing-tool agents (flat)
 - `.claude/context/` — QE context definitions (project, standards, metrics, …)
 - `.claude/commands/` — `sdd/*`, `discover*`, and context-extraction commands
-- `.claude/rules/` — `java-spring.md` (authored), `rules.md` + `context-dictionary.md` (QE)
+- `.claude/rules/` — `java-spring.md` (authored), `rules.md` (consolidated QE rules)
 - `.sdd-settings/` — SDD methodology rules + spec templates
 - `ae-toolkit/`, `ai-qe-accelerator/` — vendored accelerators (git-ignored for now)
