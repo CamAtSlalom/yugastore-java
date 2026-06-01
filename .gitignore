@@ -30,3 +30,9 @@ package-lock.json
 .env
 .vscode/
 *.dylib
+
+# AE Toolkit — used in-repo then removed; not approved for client distribution
+ae-toolkit/
+
+# QE AI Accelerator — used in-repo then removed
+ai-qe-accelerator/

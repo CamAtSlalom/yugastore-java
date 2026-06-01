@@ -1,0 +1,86 @@
+# CLAUDE.md
+
+Guidance for Claude Code when working in the **Yugastore (Java)** repository.
+
+## Project Overview
+
+Yugastore is a sample microservices-based eCommerce marketplace. It is a **Maven
+multi-module monorepo** consisting of Spring Boot microservices, a React UI, and
+YugabyteDB (distributed SQL) as the datastore.
+
+- **Java 17**, **Spring Boot 2.6.3**, **Spring Cloud 2021.0.0**
+- **Maven** build (`./mvnw`); each microservice is its own module with a `pom.xml`
+- **React UI** under `react-ui/frontend/` (wrapped by a Spring Boot module)
+- **YugabyteDB** — YCQL (Cassandra-compatible) and YSQL (PostgreSQL-compatible) APIs
+- **Python 3** for sample-data loading (`resources/`)
+- **Docker** support (`docker-run.sh`)
+
+### Microservices
+
+| Module | Port | DB API | Role |
+| --- | --- | --- | --- |
+| `eureka-server-local` | 8761 | – | Eureka service discovery; all services register here |
+| `react-ui` | 8080 | – | React eCommerce UI |
+| `api-gateway-microservice` | 8081 | – | Single external entry point; UI talks only to this |
+| `products-microservice` | 8082 | YCQL | Product catalog, categories, sales-rank |
+| `cart-microservice` | 8083 | YSQL | Shopping cart; HA / low-latency / multi-region |
+| `checkout-microservice` | 8086 | YCQL | Checkout, orders, inventory |
+| `login-microservice` | 8085 | YSQL | Login / auth (work in progress) |
+
+## Build & Run
+
+```bash
+./mvnw -DskipTests package        # build all modules
+cd <module> && ../mvnw spring-boot:run   # run one microservice
+cd react-ui/frontend && npm start         # run the React UI in dev
+./docker-run.sh                   # run everything in Docker (needs YugabyteDB)
+```
+
+YugabyteDB must be running with schemas created (`resources/schema.cql`,
+`resources/schema.sql`) and sample data loaded (`resources/dataload.sh`).
+
+## Conventions & Rules
+
+Baseline working agreements (sourced from the AE Toolkit, kept in `ae-toolkit/`):
+
+- @ae-toolkit/modules/examples/rules/generic/base/communication.md
+- @ae-toolkit/modules/examples/rules/generic/base/code-quality.md
+- @ae-toolkit/modules/examples/rules/generic/base/source-control.md
+- @ae-toolkit/modules/examples/rules/generic/base/collaboration.md
+- @ae-toolkit/modules/examples/rules/generic/base/session-management.md
+
+Stack-specific rules:
+
+- @.claude/rules/java-spring.md   <!-- primary stack: Spring Boot microservices + YugabyteDB -->
+- @ae-toolkit/modules/examples/rules/generic/tech/python.md   <!-- data-loading scripts in resources/ -->
+- @ae-toolkit/modules/examples/rules/generic/tech/react.md    <!-- react-ui/frontend -->
+
+> Rule files live under `ae-toolkit/` (kept in-repo for now). If `ae-toolkit/` is
+> later removed, copy the referenced rules into `.claude/rules/` and update these
+> paths.
+
+## Spec-Driven Development (SDD)
+
+This repo is set up for SDD. Specs live under `.sdd/specs/<feature>/`; methodology
+rules and templates are in `.sdd-settings/`.
+
+Typical brownfield flow:
+
+```
+/sdd:spec-init "<feature or PROJ-123>"
+/sdd:spec-requirements <feature>
+/sdd:validate-gap <feature>          # analyze existing code (brownfield)
+/sdd:spec-design <feature> -y
+/sdd:spec-tasks <feature> -y
+/sdd:spec-impl <feature> 1.1         # implement one task at a time (TDD)
+```
+
+Clear conversation context between `spec-impl` tasks.
+
+## Harness Layout
+
+- `.claude/agents/` — review, code-quality, documentation, testing, and `sdd/` agents
+- `.claude/commands/` — `sdd/*`, `discover*`, and context-extraction commands
+- `.claude/rules/` — repo-authored rules (e.g. `java-spring.md`)
+- `.sdd-settings/` — SDD methodology rules + spec templates
+- `ae-toolkit/`, `ai-qe-accelerator/` — vendored accelerators (git-ignored for now)
