@@ -28,7 +28,9 @@ package-lock.json
 .direnv
 .idea
 .env
-.vscode/
+.vscode/*
+# but keep shared workspace settings (Copilot prompt/instruction wiring)
+!.vscode/settings.json
 *.dylib
 
 # AE Toolkit — used in-repo then removed; not approved for client distribution
