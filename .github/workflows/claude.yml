@@ -1,8 +1,13 @@
-name: Claude Code Review
+name: Claude Code
 
-# Triggers when someone mentions @claude in a PR comment, a PR review comment,
-# a PR review, or the PR/issue body. Tagging @claude on a pull request kicks off
-# a code review against this repo's standards (see CLAUDE.md and .claude/rules/).
+# Two ways Claude reviews PRs here:
+#   1. claude-mention      — someone tags @claude on a PR/issue (interactive).
+#   2. claude-auto-review  — every newly opened/reopened PR is reviewed automatically.
+#
+# Auth: this uses the built-in GITHUB_TOKEN (github_token below) so it works
+# WITHOUT installing the Claude GitHub App. If the app is later installed on the
+# repo (needs repo admin: https://github.com/apps/claude), you can drop the
+# github_token line to post as claude[bot] instead of github-actions[bot].
 on:
   issue_comment:
     types: [created]
@@ -12,11 +17,12 @@ on:
     types: [submitted]
   issues:
     types: [opened, assigned]
+  pull_request:
+    types: [opened, reopened]
 
 jobs:
-  claude:
-    # Only run when @claude is actually mentioned, and (for issue_comment) only
-    # on pull requests — not plain issues.
+  # ── Interactive: respond when @claude is tagged on a PR/issue ──────────────
+  claude-mention:
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && github.event.issue.pull_request) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
@@ -35,21 +41,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Claude Code review
+      - name: Run Claude Code
         uses: anthropics/claude-code-action@v1
         with:
-          # Authentication — set ONE of these as a repository secret:
-          #   ANTHROPIC_API_KEY        (Anthropic API key), or
-          #   CLAUDE_CODE_OAUTH_TOKEN  (Claude Pro/Max subscription token).
-          # Comment out the line you are not using.
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-
-          # When @claude is tagged on a PR, perform a code review. The repo's
-          # CLAUDE.md and .claude/rules/ are loaded automatically and define the
-          # review standards (coverage gates, security, Spring Boot 2.6 / javax,
-          # YugabyteDB query safety, etc.). If the comment includes specific
-          # instructions, follow those in addition.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
             A reviewer tagged @claude on this pull request. Review the changes in
             this PR for correctness, security, maintainability, and adherence to
@@ -57,3 +53,34 @@ jobs:
             PR review with inline comments where useful, each with a short
             rationale and a confidence level. If the triggering comment includes
             specific requests, address those as well.
+
+  # ── Automated: review every newly opened / reopened PR ─────────────────────
+  claude-auto-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude Code review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            Review pull request #${{ github.event.pull_request.number }}
+            ("${{ github.event.pull_request.title }}") for correctness, security,
+            maintainability, and adherence to the standards in CLAUDE.md and
+            .claude/rules/. Pay particular attention to Spring Boot 2.6 / javax
+            conventions, parameterized YCQL/YSQL queries, and the coverage and
+            security gates. Post your findings as a PR review with inline comments
+            where useful, each with a short rationale and a confidence level.
+            If the PR looks good, say so briefly rather than inventing issues.
