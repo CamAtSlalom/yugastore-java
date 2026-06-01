@@ -36,3 +36,6 @@ ae-toolkit/
 
 # QE AI Accelerator — used in-repo then removed
 ai-qe-accelerator/
+
+# macOS
+.DS_Store
