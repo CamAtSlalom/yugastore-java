@@ -44,6 +44,7 @@ jobs:
           # Comment out the line you are not using.
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
           # When @claude is tagged on a PR, perform a code review. The repo's
           # CLAUDE.md and .claude/rules/ are loaded automatically and define the
